@@ -6,8 +6,14 @@ import donationRoutes from './routes/donationRoutes.js';
 import requestRoutes from './routes/requestRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
+import { bootstrapAdmin } from './utils/bootstrapAdmin.js';
 
 dotenv.config();
+
+// Bootstrap admin account on first cold start (idempotent, non-blocking)
+bootstrapAdmin().catch((err) =>
+  console.error('[bootstrap] Admin bootstrap error (non-fatal):', err)
+);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
