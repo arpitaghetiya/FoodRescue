@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  password     String
+  name         String
+  role         String       // "DONOR", "NGO", "ADMIN"
+  phone        String?
+  address      String?
+  organization String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  ngoProfile   NgoProfile?
+  donations    Donation[]
+  requests     DonationRequest[]
+  activityLogs ActivityLog[]
+}
+
+model NgoProfile {
+  id                 String    @id @default(uuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  registrationNumber String
+  mission            String?
+  operationalAreas   String?
+  verificationStatus String    @default("PENDING") // "PENDING", "VERIFIED", "REJECTED"
+  verificationNote   String?
+  verifiedAt         DateTime?
+  verifiedBy         String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model Donation {
+  id                 String            @id @default(uuid())
+  donorId            String
+  donor              User              @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  title              String
+  category           String            // "Cooked Meals", "Bakery & Bread", "Packaged & Canned", "Produce & Fruits", "Dairy & Eggs", "Beverages", "Other"
+  quantity           String            // e.g. "50 meal boxes", "30 kg"
+  quantityNumeric    Float             @default(1)
+  description        String
+  dietaryInfo        String?           // "Vegetarian", "Vegan", "Halal", "Contains Nuts", etc.
+  storageRequirement String?          // "Refrigerated", "Room Temperature", "Heated"
+  preparationDate    DateTime
+  collectionDeadline DateTime
+  pickupLocation     String
+  pickupInstructions String?
+  status             String            @default("AVAILABLE") // "AVAILABLE", "REQUESTED", "APPROVED", "PICKUP_SCHEDULED", "COLLECTED", "COMPLETED", "REJECTED", "EXPIRED", "CANCELLED"
+  imageUrl           String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  requests           DonationRequest[]
+}
+
+model DonationRequest {
+  id                 String    @id @default(uuid())
+  donationId         String
+  donation           Donation  @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  ngoId              String
+  ngo                User      @relation(fields: [ngoId], references: [id], onDelete: Cascade)
+  requestedQuantity  String?
+  notes              String?
+  status             String    @default("PENDING") // "PENDING", "APPROVED", "REJECTED", "PICKUP_SCHEDULED", "COLLECTED", "COMPLETED", "CANCELLED"
+  donorResponseNote  String?
+  pickupScheduledAt  DateTime?
+  collectedAt        DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  details   String
+  createdAt DateTime @default(now())
+}
+

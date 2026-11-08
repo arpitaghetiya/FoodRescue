@@ -1,0 +1,20 @@
+{
+  "name": "foodrescue",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smart Food Donation and Redistribution Platform",
+  "scripts": {
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "seed": "cd server && npm run db:push && npm run db:seed",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build"
+  },
+  "keywords": ["foodrescue", "donation", "university-project"],
+  "author": "FoodRescue Team",
+  "license": "MIT"
+}
+
