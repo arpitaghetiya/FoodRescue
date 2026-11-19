@@ -1,201 +1,316 @@
 # FoodRescue
-## Smart Food Donation and Redistribution Platform
+### Smart Food Donation and Redistribution Platform
 
-[![Node.js](https://img.shields.io/badge/Node.js-v24.x-brightgreen.svg)](https://nodejs.org/)
-[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.x-38bdf8.svg)](https://tailwindcss.com/)
-[![Prisma](https://img.shields.io/badge/ORM-Prisma-2D3748.svg)](https://www.prisma.io/)
-[![Status](https://img.shields.io/badge/Build-Passing-emerald.svg)]()
+**University Software Engineering Project**
 
-> **University Software Engineering Capstone Project**  
-> Developed for a strict two-day deadline by a four-member engineering team.  
-> Target: **UN Sustainable Development Goal 2 (Zero Hunger)** and **Goal 12 (Responsible Consumption & Production)**.
+FoodRescue connects food donors with verified NGOs to reduce food waste and support communities in need.
 
----
+**Repository:** https://github.com/arpitaghetiya/FoodRescue
 
-## 1. Executive Summary
+**Live Application:** https://food-rescue-client.vercel.app
 
-**FoodRescue** is a full-stack web platform bridging commercial food donors (restaurants, hotels, bakeries, caterers, supermarkets) with verified humanitarian non-governmental organizations (shelters, soup kitchens, food banks).
-
-The platform eliminates food wastage through an end-to-end, permission-controlled donation pipeline with administrative verification of charities, automated expiration controls, and real-time status tracking.
+**Backend API:** https://food-rescue-ecru.vercel.app
 
 ---
 
-## 2. Technology Stack & Architectural Decisions
+## 1. Project Overview
 
-| Layer | Technology | Rationale |
-|---|---|---|
-| **Frontend** | React 18, TypeScript, Tailwind CSS, React Router v6, Lucide React | Type-safe component architecture with responsive mobile-first UI and fast modern iconography. |
-| **Backend** | Node.js, Express.js (ES Modules), TypeScript | Scalable, non-blocking asynchronous REST API with typed controllers and Zod payload validation. |
-| **Database** | Relational SQLite via Prisma ORM | Zero-configuration, file-based relational persistence (`foodrescue.db`) eliminating daemon setup delays, with 100% PostgreSQL schema compatibility. |
-| **Authentication** | JWT (JSON Web Tokens), bcryptjs (salt rounds 10) | Stateless secure session tokens, strict role-based access control (RBAC), and protected endpoints. |
+FoodRescue is a full-stack web application that connects food donors such as restaurants, hotels, bakeries and other food businesses with NGOs, shelters and charitable organizations.
 
----
+The platform allows donors to list surplus food and verified NGOs to request available donations for distribution to people in need.
 
-## 3. Demo Credentials (For University Evaluation)
+### Main Objectives
 
-The application includes realistic sample data seeded into the persistent database. Convenient **1-Click Demo Login** buttons are also available on the Login page (`/login`) for instantaneous testing.
+- Reduce edible food waste.
+- Connect food donors with NGOs.
+- Make food redistribution easier.
+- Verify NGOs before allowing them to request donations.
+- Track donation requests and collection status.
+- Support UN Sustainable Development Goal 2 (Zero Hunger).
 
-| Role | Organization | Email Address | Password | Permissions / Capabilities |
-|---|---|---|---|---|
-| **Admin** | FoodRescue Ops | `admin@foodrescue.org` | `Admin@123` | Verify/reject NGOs, view all users & listings, remove unsafe listings, platform analytics. |
-| **Donor** | Green Garden Bistro | `donor.green@foodrescue.org` | `Donor@123` | Post cooked meals, manage listings, review & approve NGO requests, schedule pickups. |
-| **Donor** | Sunrise Artisan Bakery | `donor.bake@foodrescue.org` | `Donor@123` | Post surplus baked goods, manage listings, confirm meal collections. |
-| **NGO (Verified)** | Hope Haven Shelter | `ngo.hope@foodrescue.org` | `Ngo@123` | Search & filter food, claim available donations, track pickup schedules & completions. |
-| **NGO (Verified)** | City Care Food Bank | `ngo.city@foodrescue.org` | `Ngo@123` | Browse listings, submit requests, confirm community distributions. |
-| **NGO (Pending)** | New Dawn Relief | `ngo.new@foodrescue.org` | `Ngo@123` | **Pending verification.** Allowed to browse listings, but blocked from requesting food until approved by Admin. |
+## 2. Technology Stack
 
----
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, TypeScript |
+| Build Tool | Vite 6 |
+| Styling | Tailwind CSS |
+| Backend | Node.js, Express.js |
+| Database | PostgreSQL |
+| Database Hosting | Neon |
+| ORM | Prisma |
+| Authentication | JWT |
+| Password Security | bcrypt |
+| Hosting | Vercel |
+| Version Control | Git and GitHub |
 
-## 4. Quick Start & Execution Instructions
+## 3. User Roles and Features
+
+### Admin
+- Access the Admin Dashboard.
+- View registered users and donations.
+- Verify or reject NGO accounts.
+- Manage users and donations.
+- Monitor platform activity.
+
+### Food Donor
+- Register and log in.
+- Create food donation listings.
+- Add food category, quantity and pickup deadline.
+- Manage donations.
+- View and respond to NGO requests.
+
+### NGO / Receiver
+- Register with organization details.
+- Wait for administrator verification.
+- Browse available food donations after verification.
+- Submit donation requests.
+- Track request and collection status.
+
+## 4. Quick Start and Execution Instructions
 
 ### Prerequisites
-- Node.js (v18+ or v24+)
-- npm
 
-### 1. Installation
-In the project root (`d:\FoodRescue`):
+- Node.js (v18 or later)
+- npm
+- Git
+
+### 1. Clone the Repository
+
 ```bash
-# Install root, backend, and frontend dependencies
+git clone https://github.com/arpitaghetiya/FoodRescue.git
+cd FoodRescue
+```
+
+### 2. Install Dependencies
+
+```bash
 npm run install:all
 ```
-*(Or navigate to `/server` and `/client` individually and run `npm install`)*
 
-### 2. Database Migration & Seeding
-```bash
-npm run seed
+### 3. Environment Configuration
+
+Configure the required environment variables in the backend and frontend environment files.
+
+**Backend environment variables:**
+
+```env
+DATABASE_URL=your_neon_postgresql_connection_string
+JWT_SECRET=your_secret_key
+ADMIN_PASSWORD=your_admin_password
+NODE_ENV=development
+JWT_EXPIRES_IN=7d
+CLIENT_URL=http://localhost:5173
 ```
-This generates the Prisma Client, pushes the relational schema to SQLite (`server/foodrescue.db`), and seeds the admin, donors, NGOs, listings, requests, and audit logs.
 
-### 3. Running the Application
-Open two terminal windows:
+**Frontend environment variable:**
 
-**Terminal 1 — Backend API Server:**
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+Use your own credentials and never upload environment files or secrets to GitHub.
+
+### 4. Run the Application
+
+Open two terminal windows.
+
+**Terminal 1: Backend**
+
 ```bash
 cd server
 npm run dev
-# Server runs on http://localhost:5000
 ```
 
-**Terminal 2 — Frontend Application:**
+**Terminal 2: Frontend**
+
 ```bash
 cd client
 npm run dev
-# Frontend runs on http://localhost:5173
 ```
 
-Now open **[http://localhost:5173](http://localhost:5173)** in your browser!
+Open the frontend in your browser:
 
-### 4. Running the Automated Workflow Test Suite
-To verify all 11 core authorization and workflow checks in automated headless mode:
-```bash
-node test_workflow.js
+http://localhost:5173
+
+## 5. System Architecture
+
+The application follows a frontend-backend-database architecture.
+
+```text
+       Users
+         |
+         v
+   React Frontend
+         |
+         v
+   Express REST API
+         |
+         v
+      Prisma ORM
+         |
+         v
+  Neon PostgreSQL
 ```
+
+**Frontend:** Handles pages, registration, login and dashboards.
+
+**Backend:** Handles authentication, authorization, donations, NGO verification and API requests.
+
+**Database:** Stores user accounts, NGO profiles, donations, requests and activity logs.
+
+## 6. Database Structure
+
+The Neon PostgreSQL database contains the following tables:
+
+| Table | Purpose |
+|---|---|
+| User | Stores user details and roles |
+| NgoProfile | Stores NGO information and verification status |
+| Donation | Stores food donation listings |
+| DonationRequest | Stores NGO donation requests |
+| ActivityLog | Stores platform activity records |
+| _prisma_migrations | Tracks database migrations |
+
+The database is managed using Prisma ORM.
+
+## 7. Core Donation Workflow
+
+```text
+Donor Creates Donation
+         |
+         v
+     AVAILABLE
+         |
+         v
+     NGO Requests
+         |
+         v
+     REQUESTED
+         |
+         v
+   Donor Approves
+         |
+         v
+     APPROVED
+         |
+         v
+  Pickup Scheduled
+         |
+         v
+     COLLECTED
+         |
+         v
+     COMPLETED
+```
+
+### Important Rules
+
+- Only verified NGOs can request food.
+- Expired donations cannot be requested.
+- Duplicate pending requests are restricted.
+- Public registration is available for donor and NGO roles.
+- Admin access is managed separately.
+
+## 8. Deployment Details
+
+The application is deployed using Vercel, with Neon PostgreSQL as the production database.
+
+### GitHub Repository
+
+https://github.com/arpitaghetiya/FoodRescue
+
+### Frontend
+
+**Platform:** Vercel
+
+**Project:** food-rescue-client
+
+**URL:** https://food-rescue-client.vercel.app
+
+### Backend
+
+**Platform:** Vercel
+
+**Project:** food-rescue
+
+**URL:** https://food-rescue-ecru.vercel.app
+
+**Health Endpoint:**
+
+https://food-rescue-ecru.vercel.app/api/health
+
+### Database
+
+**Provider:** Neon PostgreSQL
+
+**Database:** neondb
+
+Production environment variables are configured through Vercel.
+
+## 9. Testing and Current Progress
+
+### Successfully Tested
+
+- Frontend deployment.
+- Backend deployment and health endpoint.
+- Donor registration and login.
+- NGO registration and login.
+- Admin login and dashboard.
+- Food donation creation.
+- NGO verification by administrator.
+- NGO status changing from Pending to Verified.
+- Database records in Neon PostgreSQL.
+- Expired donations excluded from available listings.
+
+### Still to Verify
+
+- Fresh donation with a future pickup deadline.
+- Fresh donation visibility in the NGO dashboard.
+- NGO donation request submission.
+- Donor request approval.
+- Food collection completion.
+- Final status updates across dashboards.
+
+These workflows should be marked complete after successful end-to-end testing.
+
+## 10. Security and Configuration
+
+- Passwords are protected using hashing.
+- JWT is used for authentication.
+- Role-based access is enforced.
+- Only verified NGOs should be allowed to request donations.
+- Database credentials and secret keys must remain private.
+- Production environment variables are maintained in Vercel.
+- Database operations should use validated inputs.
+
+## 11. Future Improvements
+
+- Location-based donation discovery.
+- Email notifications.
+- Food pickup scheduling.
+- NGO document upload and verification.
+- Donation expiry notifications.
+- Admin analytics and reporting.
+- Donation history and impact statistics.
+- Map integration.
+- Food safety guidelines.
+- Further mobile-responsive improvements.
+
+## 12. Conclusion
+
+FoodRescue provides a digital platform to reduce food waste by connecting food donors with verified NGOs.
+
+The project includes a deployed frontend and backend, PostgreSQL database integration, role-based dashboards, user registration, donation management and administrator-controlled NGO verification.
+
+The next important milestone is completing and testing the full donation request and collection workflow.
+
+**FoodRescue aims to turn surplus food into meaningful support for communities while contributing to a zero-food-waste future.**
 
 ---
 
-## 5. Core Donation Lifecycle & State Transitions
+**Project:** FoodRescue
 
-FoodRescue enforces a strict finite state machine for every food listing:
+**Theme:** Zero Hunger
 
-```
-[Donor Creates] 
-      ↓
-  AVAILABLE ──(NGO Claims)──> REQUESTED ──(Donor Approves)──> APPROVED
-      │                            │                              ↓
-  (Expired/Cancelled)        (Donor Rejects)              PICKUP_SCHEDULED
-      ↓                            ↓                              ↓
-   EXPIRED / CANCELLED         AVAILABLE                      COLLECTED
-                                                                  ↓
-                                                              COMPLETED
-```
-
-### Safety & Integrity Constraints:
-1. **Accreditation Gate:** Unverified NGOs cannot claim food (`403 Forbidden: isUnverifiedNgo: true`).
-2. **Duplicate Prevention:** NGOs cannot submit multiple pending requests for the same listing (`409 Conflict`).
-3. **Expiry Safeguards:** Donations past their collection deadline cannot be requested and automatically transition to `EXPIRED`.
-4. **Public Registration Filter:** Public registration only allows `DONOR` or `NGO` accounts. Administrators cannot be registered publicly.
-5. **Data Persistence:** All records reside in the SQLite database and survive full server restarts and browser refreshes.
-
----
-
-## 6. Repository Folder Structure
-
-```
-d:\FoodRescue\
-├── server\                       # Express.js REST API
-│   ├── prisma\
-│   │   ├── schema.prisma         # Relational schema (Users, NgoProfiles, Donations, Requests, ActivityLogs)
-│   │   ├── seed.ts               # Demo data seeding script
-│   │   └── foodrescue.db         # Persistent SQLite database file
-│   ├── src\
-│   │   ├── controllers\
-│   │   │   ├── authController.ts # Register, Login, Me endpoints
-│   │   │   ├── donationController.ts # Create, Browse, Search, Update, Cancel
-│   │   │   ├── requestController.ts  # Request, Approve, Reject, Schedule, Collect, Complete
-│   │   │   └── adminController.ts    # Verify NGOs, Users, Audit Logs, Listing Moderation
-│   │   ├── middleware\
-│   │   │   └── auth.ts           # JWT authentication, RBAC, requireVerifiedNgo middleware
-│   │   ├── routes\               # Express route definitions
-│   │   ├── utils\token.ts        # JWT generation and verification
-│   │   ├── prisma.ts             # PrismaClient singleton
-│   │   └── index.ts              # Express application entrypoint
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── .env
-│
-├── client\                       # React + TypeScript + Tailwind
-│   ├── src\
-│   │   ├── components\
-│   │   │   ├── common\           # Navbar, Footer, ProtectedRoute, Badge, StatCard, Modal
-│   │   │   └── donation\         # DonationCard, RequestModal
-│   │   ├── context\              # AuthContext (state, login, register, logout, token persistence)
-│   │   ├── pages\
-│   │   │   ├── donor\            # DonorDashboard, CreateDonationPage
-│   │   │   ├── ngo\              # NgoDashboard, BrowseDonationsPage
-│   │   │   ├── admin\            # AdminDashboard (verifications, users, donations, audit)
-│   │   │   ├── LandingPage.tsx   # Modern startup homepage
-│   │   │   ├── LoginPage.tsx     # Sign-in with 1-Click Demo Accounts
-│   │   │   ├── RegisterPage.tsx  # Dual role registration with dynamic NGO fields
-│   │   │   ├── HowItWorksPage.tsx
-│   │   │   ├── AboutPage.tsx
-│   │   │   ├── ContactPage.tsx
-│   │   │   └── NotFoundPage.tsx
-│   │   ├── services\api.ts       # Centralized API client
-│   │   ├── types\index.ts        # Shared TypeScript interfaces
-│   │   ├── App.tsx               # Main routing definition
-│   │   ├── main.tsx
-│   │   └── index.css
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tailwind.config.js
-│   └── tsconfig.json
-│
-├── test_workflow.js              # Automated end-to-end integration test suite
-├── package.json                  # Root monorepo orchestration scripts
-└── README.md                     # Project documentation
-```
-
----
-
-## 7. Honest Feature Implementation Status
-
-### Completed Core Features:
-- [x] **Full-Stack Architecture:** Node/Express backend + React/TypeScript frontend + Prisma/SQLite database.
-- [x] **Design System:** Forest green (`#1b4332`), fresh green (`#22c55e`), soft off-white (`#f8faf9`), warm orange (`#e76f51`), rounded cards, subtle shadows, Inter font.
-- [x] **Authentication & RBAC:** Secure password hashing (bcrypt), JWT tokens, role-protected routes for Donor, NGO, and Admin.
-- [x] **Landing Page:** Hero with CTAs, How It Works, Benefits for Donors and NGOs, live public metrics, recent listings preview, footer.
-- [x] **Donor Module:** Dashboard metrics, food donation creation form with datetime inputs, manage listings, view incoming requests, approve/reject with notes, handover confirmation.
-- [x] **NGO Module:** Dashboard metrics, unverified account warning banner, marketplace search with category & location filtering, request submission modal, request status tracker.
-- [x] **Admin Module:** 8 platform metrics, NGO verification with approve/reject workflow, user account management & deletion, platform listing moderation, activity audit log.
-- [x] **Core Workflow State Machine:** `AVAILABLE` -> `REQUESTED` -> `APPROVED` -> `PICKUP_SCHEDULED` -> `COLLECTED` -> `COMPLETED`.
-- [x] **Security & Integrity Checks:** Duplicate request blocker, expiry checks, unverified NGO access restriction, admin registration protection.
-- [x] **Responsive Layouts:** Desktop, laptop, tablet, and mobile navigation with collapsible drawer.
-- [x] **Automated Test Suite:** 11-test automated suite (`test_workflow.js`) verifying all critical endpoints and transitions.
-
-### Intentionally Skipped (Per Project Brief Section 13):
-- **AI Food Prediction / Machine Learning:** Excluded due to the 2-day sprint deadline to prioritize rock-solid core donation workflow.
-- **Live GPS Vehicle Tracking & QR Code Scanning:** Replaced with deterministic timestamped collection and handover status confirmation.
-- **Paid Third-Party SMS/Email Services:** Replaced with on-platform activity audit logs and status alerts.
-
+**SDG Alignment:** UN Sustainable Development Goal 2 – Zero Hunger
