@@ -153,21 +153,27 @@ export const getAvailableDonations = async (req: AuthenticatedRequest, res: Resp
 
     const donations = await prisma.donation.findMany({
       where: whereClause,
-      include: {
+      select: {
+        id: true,
+        donorId: true,
+        title: true,
+        category: true,
+        quantity: true,
+        quantityNumeric: true,
+        description: true,
+        dietaryInfo: true,
+        storageRequirement: true,
+        preparationDate: true,
+        collectionDeadline: true,
+        status: true,
+        imageUrl: true,
+        createdAt: true,
+        updatedAt: true,
         donor: {
           select: {
             id: true,
             name: true,
             organization: true,
-            address: true,
-            phone: true,
-          },
-        },
-        requests: {
-          select: {
-            id: true,
-            ngoId: true,
-            status: true,
           },
         },
       },
@@ -235,29 +241,27 @@ export const getDonationById = async (req: AuthenticatedRequest, res: Response):
     const { id } = req.params;
     const donation = await prisma.donation.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        donorId: true,
+        title: true,
+        category: true,
+        quantity: true,
+        quantityNumeric: true,
+        description: true,
+        dietaryInfo: true,
+        storageRequirement: true,
+        preparationDate: true,
+        collectionDeadline: true,
+        status: true,
+        imageUrl: true,
+        createdAt: true,
+        updatedAt: true,
         donor: {
           select: {
             id: true,
             name: true,
             organization: true,
-            phone: true,
-            email: true,
-            address: true,
-          },
-        },
-        requests: {
-          include: {
-            ngo: {
-              select: {
-                id: true,
-                name: true,
-                organization: true,
-                phone: true,
-                email: true,
-                ngoProfile: true,
-              },
-            },
           },
         },
       },
