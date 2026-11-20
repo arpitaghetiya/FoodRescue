@@ -2,6 +2,10 @@ import { Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma.js';
 import { AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  validateDonationCancellation,
+  ConflictError,
+} from '../utils/stateMachine.js';
 
 const donationSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -347,58 +351,87 @@ export const cancelDonation = async (req: AuthenticatedRequest, res: Response): 
     }
 
     const { id } = req.params;
-    const donation = await prisma.donation.findUnique({
-      where: { id },
-      include: { requests: true },
-    });
 
-    if (!donation) {
-      res.status(404).json({ success: false, message: 'Donation listing not found.' });
-      return;
-    }
+    const updatedDonation = await prisma.$transaction(
+      async (tx) => {
+        // 1. Touch/read Donation first
+        const donation = await tx.donation.findUnique({
+          where: { id },
+          include: { donor: true },
+        });
 
-    if (donation.donorId !== req.user.id && req.user.role !== 'ADMIN') {
-      res.status(403).json({ success: false, message: 'Not authorized to cancel this listing.' });
-      return;
-    }
+        if (!donation) {
+          const err = new Error('Donation listing not found.');
+          (err as any).statusCode = 404;
+          throw err;
+        }
 
-    if (donation.status === 'COMPLETED' || donation.status === 'COLLECTED') {
-      res.status(400).json({ success: false, message: 'Cannot cancel a completed or collected donation.' });
-      return;
-    }
+        const isDonor = donation.donorId === req.user!.id;
+        const isAdmin = req.user!.role === 'ADMIN';
 
-    const updated = await prisma.donation.update({
-      where: { id },
-      data: { status: 'CANCELLED' },
-    });
+        const validation = validateDonationCancellation(donation.status, isDonor, isAdmin);
+        if (!validation.allowed) {
+          const err = new Error(validation.error);
+          (err as any).statusCode = validation.statusCode;
+          throw err;
+        }
 
-    // Mark any pending/approved requests as cancelled
-    await prisma.donationRequest.updateMany({
-      where: {
-        donationId: id,
-        status: { in: ['PENDING', 'APPROVED', 'PICKUP_SCHEDULED'] },
+        // 2. Lock & update Donation first (guarded)
+        const donationUpdate = await tx.donation.updateMany({
+          where: {
+            id,
+            status: { in: ['AVAILABLE', 'REQUESTED', 'APPROVED', 'PICKUP_SCHEDULED'] },
+          },
+          data: { status: 'CANCELLED' },
+        });
+
+        if (donationUpdate.count === 0) {
+          throw new ConflictError('Cannot cancel donation: listing status changed concurrently.');
+        }
+
+        // 3. Update active requests second
+        await tx.donationRequest.updateMany({
+          where: {
+            donationId: id,
+            status: { in: ['PENDING', 'APPROVED', 'PICKUP_SCHEDULED'] },
+          },
+          data: {
+            status: 'CANCELLED',
+            donorResponseNote: 'Donation was cancelled by donor or administrator.',
+          },
+        });
+
+        // 4. Log activity inside tx
+        await tx.activityLog.create({
+          data: {
+            userId: req.user!.id,
+            action: 'DONATION_CANCELLED',
+            details: `Donation "${donation.title}" was cancelled by ${req.user!.name} (${req.user!.role}).`,
+          },
+        });
+
+        return await tx.donation.findUnique({
+          where: { id },
+        });
       },
-      data: {
-        status: 'CANCELLED',
-        donorResponseNote: 'Donation was cancelled by donor or administrator.',
-      },
-    });
-
-    await prisma.activityLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'DONATION_CANCELLED',
-        details: `Donation "${donation.title}" was cancelled by ${req.user.name} (${req.user.role}).`,
-      },
-    });
+      { maxWait: 5000, timeout: 10000 }
+    );
 
     res.status(200).json({
       success: true,
       message: 'Donation cancelled successfully.',
-      donation: updated,
+      donation: updatedDonation,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('cancelDonation error:', error);
+    if (error.statusCode) {
+      res.status(error.statusCode).json({ success: false, message: error.message });
+      return;
+    }
+    if (error instanceof ConflictError || error.code === 'P2034') {
+      res.status(409).json({ success: false, message: error.message || 'Concurrency conflict occurred. Please retry.' });
+      return;
+    }
     res.status(500).json({ success: false, message: 'Failed to cancel donation.' });
   }
 };

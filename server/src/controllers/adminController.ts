@@ -2,6 +2,10 @@ import { Response } from 'express';
 import prisma from '../prisma.js';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 import { runDatabaseSeed } from '../utils/seedData.js';
+import {
+  validateDonationCancellation,
+  ConflictError,
+} from '../utils/stateMachine.js';
 
 export const getAdminStats = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -261,46 +265,78 @@ export const adminRemoveDonation = async (req: AuthenticatedRequest, res: Respon
     const { id } = req.params;
     const { reason } = req.body;
 
-    const donation = await prisma.donation.findUnique({
-      where: { id },
-      include: { donor: true },
-    });
+    await prisma.$transaction(
+      async (tx) => {
+        // 1. Touch/read Donation first
+        const donation = await tx.donation.findUnique({
+          where: { id },
+          include: { donor: true },
+        });
 
-    if (!donation) {
-      res.status(404).json({ success: false, message: 'Donation not found.' });
-      return;
-    }
+        if (!donation) {
+          const err = new Error('Donation not found.');
+          (err as any).statusCode = 404;
+          throw err;
+        }
 
-    await prisma.donation.update({
-      where: { id },
-      data: { status: 'CANCELLED' },
-    });
+        const validation = validateDonationCancellation(donation.status, false, true);
+        if (!validation.allowed) {
+          const err = new Error(validation.error);
+          (err as any).statusCode = validation.statusCode;
+          throw err;
+        }
 
-    await prisma.donationRequest.updateMany({
-      where: {
-        donationId: id,
-        status: { in: ['PENDING', 'APPROVED', 'PICKUP_SCHEDULED'] },
+        // 2. Lock & update Donation first (guarded)
+        const donationUpdate = await tx.donation.updateMany({
+          where: {
+            id,
+            status: { in: ['AVAILABLE', 'REQUESTED', 'APPROVED', 'PICKUP_SCHEDULED'] },
+          },
+          data: { status: 'CANCELLED' },
+        });
+
+        if (donationUpdate.count === 0) {
+          throw new ConflictError('Cannot remove donation: listing status changed concurrently.');
+        }
+
+        // 3. Update active requests second
+        await tx.donationRequest.updateMany({
+          where: {
+            donationId: id,
+            status: { in: ['PENDING', 'APPROVED', 'PICKUP_SCHEDULED'] },
+          },
+          data: {
+            status: 'CANCELLED',
+            donorResponseNote: `Removed by administrator: ${reason || 'Safety / compliance policy violation'}`,
+          },
+        });
+
+        // 4. Log activity inside tx
+        await tx.activityLog.create({
+          data: {
+            userId: req.user?.id,
+            action: 'DONATION_REMOVED_BY_ADMIN',
+            details: `Donation "${donation.title}" was flagged and cancelled by Admin: ${reason || 'Policy violation'}`,
+          },
+        });
       },
-      data: {
-        status: 'CANCELLED',
-        donorResponseNote: `Removed by administrator: ${reason || 'Safety / compliance policy violation'}`,
-      },
-    });
-
-    await prisma.activityLog.create({
-      data: {
-        userId: req.user?.id,
-        action: 'DONATION_REMOVED_BY_ADMIN',
-        details: `Donation "${donation.title}" was flagged and cancelled by Admin: ${reason || 'Policy violation'}`,
-      },
-    });
+      { maxWait: 5000, timeout: 10000 }
+    );
 
     res.status(200).json({
       success: true,
       message: 'Donation listing removed successfully.',
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('adminRemoveDonation error:', error);
+    if (error.statusCode) {
+      res.status(error.statusCode).json({ success: false, message: error.message });
+      return;
+    }
+    if (error instanceof ConflictError || error.code === 'P2034') {
+      res.status(409).json({ success: false, message: error.message || 'Concurrency conflict occurred. Please retry.' });
+      return;
+    }
     res.status(500).json({ success: false, message: 'Failed to remove donation listing.' });
   }
 };
